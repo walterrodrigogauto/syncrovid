@@ -14,7 +14,7 @@
  * producción no se muestra nada (en desarrollo se ven marcadores de posición
  * punteados para poder maquetar).
  */
-export const ADSENSE_CLIENT = ''; // ej: 'ca-pub-1234567890123456'
+export const ADSENSE_CLIENT = 'ca-pub-6416877213060621'; // ej: 'ca-pub-1234567890123456'
 
 export const AD_SLOTS = {
   /** Banner vertical (160×600) en /watch. */
