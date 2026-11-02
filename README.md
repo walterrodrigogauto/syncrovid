@@ -1,4 +1,4 @@
-# SyncReact ⏯️
+# Syncrovid ⏯️
 
 **Reacciones de YouTube en perfecta sincronía.** Graba tu reacción con la webcam mientras controlas
 el video musical original, exporta un archivo `.sync` con cada marca temporal (`play` / `pause` /
@@ -31,7 +31,7 @@ Implementación completa de la _Guía de Implementación Técnica y Roadmap de D
    `{ type, vrTimeSec, vmTimeSec }`.
 2. Al presionar **DETENER** se descargan dos archivos:
    - El video de la reacción (WebM o MP4, según el navegador).
-   - `syncreact-reaccion-….sync` — JSON estructurado con las marcas temporales.
+   - `syncrovid-reaccion-….sync` — JSON estructurado con las marcas temporales.
 3. Sube el video descargado a tu canal de YouTube: será el **VR** (video de la reacción).
 4. **Publicar** (`/upload`): completa la URL del VM, la URL del VR y carga el `.sync`.
    Se genera un enlace tipo `…/watch?vm=ID_VM&vr=ID_VR&data=eJzLSM3…`
@@ -83,9 +83,79 @@ npm run build    # tsc -b && vite build  → dist/
 npm run preview  # sirve dist/ localmente
 ```
 
+### GitHub Pages
+
+El proyecto incluye el workflow `.github/workflows/deploy.yml`, que compila y publica
+automáticamente en cada push a `main`:
+
+1. El repo debe llamarse **`syncrovid`** (sin mayúsculas): `vite.config.ts` compila con la
+   subruta `base: '/syncrovid/'` para `https://tu-usuario.github.io/syncrovid/`.
+2. En el repo: **Settings → Pages → Source: GitHub Actions**.
+3. Haz push (o re-ejecuta el workflow).
+
+> Importante: GitHub Pages sirve archivos estáticos; hay que desplegar el **build** (`dist/`),
+> no el código fuente (`src/`). El workflow se encarga de eso y además copia `index.html` como
+> `404.html` para que las rutas del SPA (`/record`, `/upload`, `/watch`) funcionen al recargar.
+
+### Dominio propio (syncrovid.com)
+
+Cuando conectes el dominio en **Settings → Pages → Custom domain**, el sitio pasa a servirse
+desde la raíz y hay que compilar con base `/`:
+
+```bash
+VITE_BASE_PATH=/ npm run build
+```
+
+El `basename` del router se ajusta solo, y los enlaces viejos de la época `/syncrovid/…` y
+`/SyncReact2026/…` se redirigen automáticamente al abrirlos en el dominio.
+
+### Vercel / Netlify
+
 - **Vercel**: importa el repo desde GitHub. El `vercel.json` incluido ya reescribe todas las rutas a
   `index.html` (SPA).
 - **Netlify**: el `public/_redirects` incluido hace lo mismo (`/* /index.html 200`).
+
+## Guardado de `.sync` en el Drive de cada creador (opcional)
+
+En **Publicar**, el creador puede conectar su cuenta de Google (OAuth, scope mínimo `drive.file`:
+la app solo toca los archivos que ella misma crea) y guardar sus `.sync` en una carpeta
+`Syncrovid/` de **su propio Drive**, con nombre `DDMMAAAA_HHMM.sync` y metadatos (vm/vr).
+
+- **Enlace corto**: `/watch?vm=ID&vr=ID&sync=FILE_ID` — el visitante descarga el `.sync` público
+  desde Drive con solo la API key (sin login), e incluye `data=` embebido como **respaldo
+  automático** si Drive no responde.
+- **Mis reacciones**: lista de los `.sync` guardados (copiar enlace / eliminar).
+- Configuración en `src/config/google.ts` (Client ID + API Key del proyecto `syncrovid` en
+  Google Cloud; app en modo testing → hasta 100 usuarios de prueba hasta verificarla).
+
+## Monetización con Google AdSense
+
+La app incluye la infraestructura de anuncios lista para activar:
+
+| Ubicación | Formato | Cuándo se ve |
+| --- | --- | --- |
+| `/watch` columna derecha | Vertical 160×600 | Pantallas ≥ 1280px |
+| `/record` columna derecha | Vertical 160×600 | Pantallas ≥ 1280px |
+| `/watch` y `/record`, abajo | Horizontal responsive | Pantallas chicas / móviles |
+
+### Activación
+
+1. Creá la cuenta en [adsense.google.com](https://adsense.google.com) y sumá el sitio para revisión
+   (la página `/privacidad` ya está incluida — AdSense la exige).
+2. Copiá tu **ID de editor** (`ca-pub-…`) y completalo en `src/config/ads.ts`.
+3. Creá unidades de anuncio **display** en AdSense y copiá los **IDs de espacio** a
+   `AD_SLOTS` (`watchVertical`, `recordVertical`, `horizontal`).
+4. Subí un archivo `ads.txt` a la raíz del repo:
+   `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`
+   (tu número de publisher, sin el prefijo `ca-`).
+5. Recompilá (`npm run build`) y subí el nuevo `dist/`.
+
+Mientras no haya IDs configurados: en desarrollo se ven marcadores punteados de posición y en
+producción no se carga ningún script ni se muestra nada.
+
+> Consejos de aprobación: AdSense prefiere sitios con contenido propio y tráfico real; un dominio
+> propio (en vez de `usuario.github.io`) ayuda mucho. Revisá también los límites de uso de GitHub
+> Pages para sitios con publicidad: para escalar, considerá Vercel/Netlify + dominio propio.
 
 ## Notas y limitaciones
 
@@ -98,3 +168,9 @@ npm run preview  # sirve dist/ localmente
   la configuración y genere un slug corto (`/watch/v8aF9x2`).
 - Autoplay: el Slave arranca silenciado precisamente para que los navegadores permitan su reproducción
   programática junto al Master.
+- **Publicidad de YouTube**: durante un anuncio, `getDuration()` devuelve la duración del anuncio (mucho
+  menor que la del video). El motor lo detecta y: (a) si el ad está en la reacción (Master), congela el
+  video musical hasta que termine; (b) si está en el video musical (Slave), deja que el anuncio corra
+  silenciado sin spamear correcciones, y al volver el contenido real el Drift Control realinea al
+  instante. Si un anuncio aparece **durante la grabación** en `/record`, las marcas temporales del
+  `.sync` quedan corrompidas: conviene repetir la toma.
