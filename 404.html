@@ -9,20 +9,17 @@
       content="Syncrovid — Graba reacciones sincronizadas a videos de YouTube y compártelas con un motor Master-Slave de baja latencia."
     />
     <!--
-      Script de Google AdSense: debe estar en el HTML para que Google verifique
-      el sitio durante la revisión de la cuenta. Los anuncios solo se muestran
-      si el visitante acepta el consentimiento (ver AdBanner.tsx).
-      El id="adsense-loader" evita que la app lo cargue dos veces.
+      Verificación de Google AdSense (cuenta de editor). El script de anuncios
+      NO se carga globalmente: solo lo inyecta AdBanner.tsx en las páginas con
+      contenido (inicio, /watch con video válido), y únicamente si el visitante
+      aceptó el consentimiento. Así las pantallas de creación (/record, /upload)
+      y los estados sin contenido nunca cargan publicidad, como exige la
+      política de AdSense.
     -->
-    <script
-      id="adsense-loader"
-      async
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6416877213060621"
-      crossorigin="anonymous"
-    ></script>
+    <meta name="google-adsense-account" content="ca-pub-6416877213060621" />
     <title>Syncrovid — Sincroniza tus reacciones</title>
-    <script type="module" crossorigin src="/assets/index-DSzr11VX.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BmtqYu8X.css">
+    <script type="module" crossorigin src="/assets/index-C09W_L5J.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D1EKUu2P.css">
   </head>
   <body>
     <div id="root"></div>
